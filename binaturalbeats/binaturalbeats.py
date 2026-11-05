@@ -1,0 +1,418 @@
+import os
+import reflex as rx
+from starlette.staticfiles import StaticFiles
+
+# State management
+class State(rx.State):
+    """The app state."""
+    # Contact form state
+    name: str = ""
+    email: str = ""
+    message: str = ""
+    submitted: bool = False
+
+    def handle_submit(self, form_data: dict):
+        self.name = form_data.get("name", "")
+        self.email = form_data.get("email", "")
+        self.message = form_data.get("message", "")
+        self.submitted = True
+
+    def reset_form(self):
+        self.name = ""
+        self.email = ""
+        self.message = ""
+        self.submitted = False
+
+
+def navigation_bar() -> rx.Component:
+    """Header navigation component."""
+    return rx.hstack(
+        rx.hstack(
+            rx.heading("Bi Natural Beats", size="5", font_weight="bold", color="#1a202c"),
+            align="center",
+        ),
+        rx.spacer(),
+        rx.hstack(
+            rx.link(
+                rx.button("Home", variant="ghost", color_scheme="gray"),
+                href="/",
+            ),
+            rx.link(
+                rx.button("Connect", variant="solid", color_scheme="teal"),
+                href="/contact",
+            ),
+            spacing="3",
+            align="center",
+        ),
+        width="100%",
+        max_width="1200px",
+        padding_y="1.5em",
+        padding_x="1em",
+        border_bottom="1px solid #e2e8f0",
+        align="center",
+    )
+
+
+def footer() -> rx.Component:
+    """Footer component."""
+    return rx.vstack(
+        rx.text("© Bi Natural Beats Studio - Colorado Outdoor Sound Lab", font_size="0.9em", color="#718096"),
+        rx.text("Crafted with Reflex & Python", font_size="0.8em", color="#a0aec0"),
+        spacing="2",
+        align="center",
+        padding_y="3em",
+        width="100%",
+        border_top="1px solid #e2e8f0",
+        margin_top="4em",
+    )
+
+
+def track_card(title: str, audio_url: str, image_url: str = None, subtitle: str = None, description: str = None) -> rx.Component:
+    """Helper to render an audio track card with player and artwork."""
+    return rx.box(
+        rx.vstack(
+            rx.heading(title, size="4", font_weight="bold", color="#2d3748"),
+            rx.cond(
+                image_url is not None,
+                rx.image(
+                    src=image_url if image_url else "",
+                    width="100%",
+                    max_width="600px",
+                    height="auto",
+                    border_radius="10px",
+                    alt=title,
+                    box_shadow="0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)",
+                ),
+            ),
+            rx.cond(
+                subtitle is not None,
+                rx.text(subtitle if subtitle else "", font_size="0.9em", color="#718096", italic=True),
+            ),
+            rx.box(
+                rx.audio(
+                    url=audio_url,
+                    controls=True,
+                    width="100%",
+                ),
+                width="100%",
+                max_width="600px",
+                padding_y="0.5em",
+            ),
+            rx.cond(
+                description is not None,
+                rx.text(
+                    description if description else "",
+                    font_size="0.95em",
+                    text_align="center",
+                    color="#4a5568",
+                    max_width="600px",
+                ),
+            ),
+            spacing="3",
+            align="center",
+            width="100%",
+        ),
+        padding="1.5em",
+        background="#ffffff",
+        border_radius="12px",
+        box_shadow="0 1px 3px 0 rgba(0, 0, 0, 0.1)",
+        width="100%",
+        max_width="650px",
+    )
+
+
+def index() -> rx.Component:
+    """Home / Index Page matching the full WordPress design."""
+    return rx.center(
+        rx.vstack(
+            navigation_bar(),
+
+            # Header Section
+            rx.vstack(
+                rx.badge("Independent Sound Design", color_scheme="teal", variant="surface", size="2"),
+                rx.text("Brought to you", font_size="1.25em", text_align="center", color="#4a5568"),
+                rx.heading("Bi Natural Beats Studio", size="8", text_align="center", font_weight="extrabold", color="#1a202c"),
+                rx.heading("We are an independent creative outdoor recording studio", size="5", text_align="center", color="#4a5568", font_weight="medium"),
+                spacing="3",
+                align="center",
+                padding_y="2em",
+                max_width="800px",
+            ),
+            
+            # Cover Image
+            rx.box(
+                rx.image(
+                    src="/media/images/cover.jpg", 
+                    width="100%", 
+                    height="auto", 
+                    border_radius="16px",
+                    alt="Cover Image",
+                    box_shadow="0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)",
+                ),
+                width="100%",
+                max_width="900px",
+                padding_x="1em",
+            ),
+
+            # Intro Section
+            rx.vstack(
+                rx.heading("Bi Natural Beats", size="6", text_align="center", font_weight="bold"),
+                rx.text(
+                    "We are a small recording studio based in Colorado focused on combining natural sounds with Binaural Beats to achieve altered states of consciousness and creating high levels of concentration, focused activity, meditation, relaxation, and lucid dream states.",
+                    text_align="center",
+                    font_size="1.1em",
+                    max_width="800px",
+                    line_height="1.75",
+                    color="#4a5568",
+                ),
+                spacing="4",
+                align="center",
+                padding_y="3em",
+                padding_x="1em",
+            ),
+
+            # Audio Gallery Section
+            rx.vstack(
+                rx.heading("Soundscapes & Field Recordings", size="6", font_weight="bold", color="#2d3748"),
+                rx.text("Experience raw outdoor binaural captures directly from Colorado wilderness", color="#718096"),
+                
+                track_card(
+                    title="Industrial Birds 3D",
+                    audio_url="/media/audio/221024_001_Binaural_industrial_birds-2.mp3",
+                    image_url="/media/images/birds.jpg",
+                ),
+                
+                track_card(
+                    title="Industrial Birds Focused",
+                    audio_url="/media/audio/221024_001_Binaural_industrial_birds-1.mp3",
+                    image_url="/media/images/bird.jpg",
+                    subtitle="Boulder Canyon birds",
+                ),
+                
+                track_card(
+                    title="Boulder Canyon Birds (Binaural)",
+                    audio_url="/media/audio/BoulderCanyonBirds_Binaural.mp3",
+                    subtitle="Pure Boulder Canyon field capture",
+                ),
+                
+                track_card(
+                    title="Snow Creek near Big Elk Meadows",
+                    audio_url="/media/audio/snow_creek-1.mp3",
+                    image_url="/media/images/snow_creek.jpg",
+                    subtitle="Snow Creek near Big Elk Meadows",
+                ),
+
+                spacing="6",
+                align="center",
+                width="100%",
+                padding_y="2em",
+            ),
+
+            # Call to Action
+            rx.box(
+                rx.vstack(
+                    rx.heading("Ready to immerse in natural acoustics?", size="6", text_align="center", color="#1a202c"),
+                    rx.text("Connect with our studio team for custom audio productions or licensing.", color="#4a5568", text_align="center"),
+                    rx.link(
+                        rx.button(
+                            "Connect With Us", 
+                            variant="surface",
+                            color_scheme="teal",
+                            size="3",
+                        ),
+                        href="/contact",
+                    ),
+                    spacing="4",
+                    align="center",
+                ),
+                padding="4em 2em",
+                background="#f7fafc",
+                border_radius="16px",
+                width="100%",
+                max_width="900px",
+                border="1px solid #e2e8f0",
+                margin_y="2em",
+            ),
+
+            # Nature is Binaural Section
+            rx.vstack(
+                rx.heading("Nature is Binaural", size="7", text_align="center", font_weight="bold", color="#1a202c"),
+                rx.image(
+                    src="/media/images/cover-small.jpg", 
+                    width="100%",
+                    max_width="600px", 
+                    border_radius="15px",
+                    alt="Album Cover",
+                    box_shadow="0 4px 6px -1px rgba(0, 0, 0, 0.1)",
+                ),
+                rx.text(
+                    "Introducing Bi Natural Beats, a unique album that combines the beauty of nature with binaural beats. Our tracks are carefully crafted using real-life recordings from the Rocky Mountains and specifically tuned brain waves to achieve a range of desired states of consciousness.",
+                    font_weight="medium",
+                    text_align="center",
+                    max_width="800px",
+                    font_size="1.1em",
+                    line_height="1.75",
+                    color="#4a5568",
+                    padding_x="1em",
+                ),
+                
+                # Album Tracks
+                rx.vstack(
+                    track_card(
+                        title="Rockin Robin",
+                        audio_url="/media/audio/RockinRobn.mp3",
+                        description="Track 1, Rockin' Robbin, is perfect for your daily tasks. It's tuned to 741 hz to promote problem-solving and puts your brain into beta. This track features the sounds of local birds in Boulder, CO.",
+                    ),
+                    track_card(
+                        title="Awakened",
+                        audio_url="/media/audio/11_awakened.mp3",
+                        description="Track 2, Awakened, is a special recording of Elk bugling all night in Rocky Mountain National Park. This track is tuned to 852 hz to promote returning to spiritual order.",
+                    ),
+                    track_card(
+                        title="Rainy Daze",
+                        audio_url="/media/audio/12_ranydaze.mp3",
+                        description="Track 3, Rainy Daze, is a soothing and relaxing track recorded on a rainy evening in the Rocky Mountains. It's tuned to 396 hz to promote the release of fear, guilt, and anxiety.",
+                    ),
+                    track_card(
+                        title="Sleepy Elk",
+                        audio_url="/media/audio/13_sleepyElk-1.mp3",
+                        description="Track 4, Sleepy Elk, is the perfect way to end your day. It's tuned to 174 Hz to promote deep relaxation, slowly bringing your brain from Alpha to Delta.",
+                    ),
+                    spacing="6",
+                    width="100%",
+                    align="center",
+                ),
+
+                # PDF Section
+                rx.vstack(
+                    rx.link(
+                        rx.button("Download Rocky Mountain Book (PDF)", color_scheme="blue", size="3"), 
+                        href="/media/docs/RockyMountainBook.pdf", 
+                        is_external=True
+                    ),
+                    align="center",
+                    padding_top="2em",
+                ),
+                
+                spacing="6",
+                align="center",
+                width="100%",
+                padding_y="2em",
+            ),
+
+            footer(),
+            
+            width="100%",
+            max_width="1200px",
+            spacing="8",
+            align="center",
+        ),
+        width="100%",
+        background_color="#f8fafc",
+        min_height="100vh",
+    )
+
+
+def contact() -> rx.Component:
+    """Contact page allowing users to send messages to the studio."""
+    return rx.center(
+        rx.vstack(
+            navigation_bar(),
+            
+            rx.vstack(
+                rx.badge("Get in Touch", color_scheme="teal", variant="surface", size="2"),
+                rx.heading("Connect With Us", size="8", font_weight="bold", color="#1a202c"),
+                rx.text(
+                    "Reach out to Bi Natural Beats Studio for questions about audio engineering, custom recordings, or licensing.",
+                    text_align="center",
+                    color="#4a5568",
+                    max_width="600px",
+                ),
+                spacing="3",
+                align="center",
+                padding_y="2em",
+            ),
+
+            rx.box(
+                rx.cond(
+                    State.submitted,
+                    rx.vstack(
+                        rx.box(
+                            rx.heading("Thank you for connecting!", size="5", color="#2f855a"),
+                            rx.text("We received your message and will respond shortly.", color="#4a5568"),
+                            padding="1.5em",
+                            background="#f0fff4",
+                            border="1px solid #9ae6b4",
+                            border_radius="8px",
+                            width="100%",
+                        ),
+                        rx.button("Send Another Message", on_click=State.reset_form, variant="outline", color_scheme="teal"),
+                        spacing="4",
+                        align="center",
+                    ),
+                    rx.form(
+                        rx.vstack(
+                            rx.vstack(
+                                rx.text("Your Name", font_weight="medium", font_size="0.9em"),
+                                rx.input(name="name", placeholder="John Doe", required=True, width="100%"),
+                                align="start",
+                                width="100%",
+                            ),
+                            rx.vstack(
+                                rx.text("Email Address", font_weight="medium", font_size="0.9em"),
+                                rx.input(name="email", type="email", placeholder="you@example.com", required=True, width="100%"),
+                                align="start",
+                                width="100%",
+                            ),
+                            rx.vstack(
+                                rx.text("Message", font_weight="medium", font_size="0.9em"),
+                                rx.text_area(name="message", placeholder="Tell us about your project or inquiry...", required=True, width="100%"),
+                                align="start",
+                                width="100%",
+                            ),
+                            rx.button("Send Message", type="submit", color_scheme="teal", size="3", width="100%"),
+                            spacing="4",
+                            width="100%",
+                        ),
+                        on_submit=State.handle_submit,
+                        reset_on_submit=True,
+                    ),
+                ),
+                padding="2em",
+                background="#ffffff",
+                border_radius="12px",
+                box_shadow="0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)",
+                border="1px solid #e2e8f0",
+                width="100%",
+                max_width="600px",
+            ),
+
+            footer(),
+            width="100%",
+            max_width="1200px",
+            spacing="6",
+            align="center",
+        ),
+        width="100%",
+        background_color="#f8fafc",
+        min_height="100vh",
+    )
+
+
+app = rx.App(
+    theme=rx.theme(
+        appearance="light",
+        has_background=True,
+        accent_color="teal",
+    )
+)
+
+# Static media mount directly into FastAPI backend
+media_dir = os.getenv("MEDIA_DIR", "/media")
+if not os.path.exists(media_dir):
+    media_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "media")
+if os.path.exists(media_dir):
+    app.api.mount("/media", StaticFiles(directory=media_dir), name="media")
+
+app.add_page(index, route="/", title="Bi Natural Beats Studio")
+app.add_page(contact, route="/contact", title="Connect With Us - Bi Natural Beats")

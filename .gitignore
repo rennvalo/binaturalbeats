@@ -1,0 +1,21 @@
+# Reflex
+.web/
+*.zip
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.env.local
+.venv/
+venv/
+ENV/
+
+# Data and SQLite
+*.db
+*.sqlite
+*.sqlite3
+
+# Logs
+*.log
