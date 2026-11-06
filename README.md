@@ -7,8 +7,10 @@ An independent creative outdoor recording studio web application built with Pyth
 - **Direct Audio Playback**: Listen to binaural field recordings and tracks directly via standard HTML5 audio players.
 - **Colorado Field Recordings Gallery**: Visual and audio tracks including Boulder Canyon, Big Elk Meadows, and Rocky Mountain National Park.
 - **Nature is Binaural Album Showcase**: Features Rockin Robin, Awakened, Rainy Daze, and Sleepy Elk tracks with description and frequency notes.
+- **Book Page**: Dedicated `/book` page for the Nature is Binaural album and Rocky Mountain Book PDF.
 - **Resource Downloads**: Rocky Mountain Book PDF download.
 - **Connect / Contact Page**: Integrated contact inquiry form.
+- **Privacy and Terms Pages**: Footer links to `/privacy` and `/terms`. These are general starter notices and should be reviewed for the site's jurisdiction and actual data-handling practices before relying on them as legal compliance documents.
 - **Self-Contained & Containerized**: Dockerized with Python Reflex, zero external dependencies, and persistent data/media mounts.
 - **Environment & SQLite Storage**: Reads config from `/data/.env` and stores lightweight SQLite database in `/data/app.db`.
 
