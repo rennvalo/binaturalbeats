@@ -60,16 +60,12 @@ def navigation_bar() -> rx.Component:
         rx.spacer(),
         rx.hstack(
             rx.link(
-                rx.button("Home", variant="ghost", color_scheme="gray"),
+                rx.button("Home", variant="solid", color_scheme="gray"),
                 href="/",
             ),
             rx.link(
-                rx.button("Book", variant="ghost", color_scheme="gray"),
+                rx.button("Book", variant="solid", color_scheme="teal"),
                 href="/book",
-            ),
-            rx.link(
-                rx.button("Connect", variant="solid", color_scheme="teal"),
-                href="/contact",
             ),
             spacing="3",
             align="center",
