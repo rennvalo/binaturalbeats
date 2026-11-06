@@ -2,6 +2,36 @@ import os
 import reflex as rx
 from starlette.staticfiles import StaticFiles
 
+
+def parallax_section(content: rx.Component, image_url: str, height: str = "100vh") -> rx.Component:
+    """Render a full-width hero section with a cover background image."""
+    return rx.box(
+        rx.box(
+            content,
+            width="100%",
+            max_width="1200px",
+            margin="0 auto",
+            padding="2em 1em",
+            display="flex",
+            flex_direction="column",
+            justify_content="center",
+            align_items="center",
+            min_height=height,
+            position="relative",
+        ),
+        style={
+            "background_image": f"url('{image_url}')",
+            "background_attachment": "scroll",
+            "background_position": "center",
+            "background_repeat": "no-repeat",
+            "background_size": "cover",
+            "position": "relative",
+            "width": "100%",
+            "min_height": height,
+        },
+    )
+
+
 # State management
 class State(rx.State):
     """The app state."""
@@ -125,18 +155,20 @@ def index() -> rx.Component:
     """Home / Index Page matching the full WordPress design."""
     return rx.center(
         rx.vstack(
-            navigation_bar(),
-
-            # Header Section
-            rx.vstack(
-                rx.badge("Independent Sound Design", color_scheme="teal", variant="surface", size="2"),
-                rx.text("Brought to you", font_size="1.25em", text_align="center", color="#4a5568"),
-                rx.heading("Bi Natural Beats Studio", size="8", text_align="center", font_weight="extrabold", color="#1a202c"),
-                rx.heading("We are an independent creative outdoor recording studio", size="5", text_align="center", color="#4a5568", font_weight="medium"),
-                spacing="3",
-                align="center",
-                padding_y="2em",
-                max_width="800px",
+            parallax_section(
+                rx.vstack(
+                    navigation_bar(),
+                    rx.badge("Independent Sound Design", color_scheme="teal", variant="surface", size="2"),
+                    rx.text("Brought to you", font_size="1.25em", text_align="center", color="#ffffff"),
+                    rx.heading("Bi Natural Beats Studio", size="8", text_align="center", font_weight="extrabold", color="#ffffff"),
+                    rx.heading("We are an independent creative outdoor recording studio", size="5", text_align="center", color="#e2e8f0", font_weight="medium"),
+                    spacing="3",
+                    align="center",
+                    padding_y="2em",
+                    max_width="800px",
+                ),
+                image_url="/media/images/background.jpg",
+                height="80vh",
             ),
             
             # Cover Image
@@ -303,7 +335,6 @@ def index() -> rx.Component:
             footer(),
             
             width="100%",
-            max_width="1200px",
             spacing="8",
             align="center",
         ),

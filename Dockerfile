@@ -23,18 +23,15 @@ ENV PATH="${BUN_INSTALL}/bin:${PATH}"
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Create project folders
-RUN mkdir -p /data /media/images /media/audio /media/docs /app/assets /app/data /app/media
+# Create persistent runtime directories and Reflex's static asset directory.
+RUN mkdir -p /data /media /app/assets
 
-# Copy application source and assets
+# Copy application source and media served by the FastAPI static mount.
 COPY rxconfig.py .
 COPY binaturalbeats/ ./binaturalbeats/
-COPY data/ /app/data/
-COPY data/ /data/
-COPY media/ /app/media/
 COPY media/ /media/
 
-# Link /media to assets/media for Reflex Next.js asset serving
+# Expose mounted media through Reflex's frontend static asset server.
 RUN ln -sfn /media /app/assets/media
 
 # Initialize reflex and build frontend
