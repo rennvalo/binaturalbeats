@@ -3,8 +3,8 @@ import reflex as rx
 from starlette.staticfiles import StaticFiles
 
 
-def parallax_section(content: rx.Component, image_url: str, height: str = "100vh") -> rx.Component:
-    """Render a full-width hero section with a cover background image."""
+def parallax_section(content: rx.Component, height: str = "100vh") -> rx.Component:
+    """Render a full-width hero section over the page background."""
     return rx.box(
         rx.box(
             content,
@@ -20,11 +20,7 @@ def parallax_section(content: rx.Component, image_url: str, height: str = "100vh
             position="relative",
         ),
         style={
-            "background_image": f"url('{image_url}')",
-            "background_attachment": "scroll",
-            "background_position": "center",
-            "background_repeat": "no-repeat",
-            "background_size": "cover",
+            "background_color": "rgba(0, 0, 0, 0.2)",
             "position": "relative",
             "width": "100%",
             "min_height": height,
@@ -94,6 +90,8 @@ def footer() -> rx.Component:
         width="100%",
         border_top="1px solid #e2e8f0",
         margin_top="4em",
+        background="rgba(255, 255, 255, 0.88)",
+        border_radius="16px",
     )
 
 
@@ -167,7 +165,6 @@ def index() -> rx.Component:
                     padding_y="2em",
                     max_width="800px",
                 ),
-                image_url="/media/images/background.jpg",
                 height="80vh",
             ),
             
@@ -201,6 +198,9 @@ def index() -> rx.Component:
                 align="center",
                 padding_y="3em",
                 padding_x="1em",
+                background="rgba(255, 255, 255, 0.88)",
+                border_radius="16px",
+                width="100%",
             ),
 
             # Audio Gallery Section
@@ -238,6 +238,8 @@ def index() -> rx.Component:
                 align="center",
                 width="100%",
                 padding_y="2em",
+                background="rgba(255, 255, 255, 0.88)",
+                border_radius="16px",
             ),
 
             # Call to Action
@@ -330,6 +332,8 @@ def index() -> rx.Component:
                 align="center",
                 width="100%",
                 padding_y="2em",
+                background="rgba(255, 255, 255, 0.88)",
+                border_radius="16px",
             ),
 
             footer(),
@@ -339,8 +343,14 @@ def index() -> rx.Component:
             align="center",
         ),
         width="100%",
-        background_color="#f8fafc",
         min_height="100vh",
+        style={
+            "background_image": "url('/media/images/background.jpg')",
+            "background_attachment": "fixed",
+            "background_position": "center",
+            "background_repeat": "no-repeat",
+            "background_size": "cover",
+        },
     )
 
 
