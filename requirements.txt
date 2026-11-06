@@ -1,4 +1,4 @@
-reflex==0.6.8
+reflex==0.8.14.post1
 sqlmodel==0.0.14
 SQLAlchemy==2.0.57
 python-dotenv>=1.0.0
