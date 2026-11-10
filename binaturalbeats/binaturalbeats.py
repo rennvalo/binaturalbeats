@@ -325,7 +325,7 @@ def book() -> rx.Component:
         rx.vstack(
             rx.heading("Nature is Binaural", size="7", text_align="center", font_weight="bold", color="#1a202c"),
             rx.image(
-                src="/media/images/cover-small.jpg",
+                src="/media/images/cover-small.png",
                 width="100%",
                 max_width="600px",
                 border_radius="15px",
