@@ -178,7 +178,7 @@ def index() -> rx.Component:
             # Cover Image
             rx.box(
                 rx.image(
-                    src="/media/images/cover.jpg", 
+                    src="/media/images/cover.png", 
                     width="100%", 
                     height="auto", 
                     border_radius="16px",
@@ -224,13 +224,14 @@ def index() -> rx.Component:
                 track_card(
                     title="Industrial Birds Focused",
                     audio_url="/media/audio/221024_001_Binaural_industrial_birds-1.mp3",
-                    image_url="/media/images/bird.jpg",
+                    image_url="/media/images/bird.JPG",
                     subtitle="Boulder Canyon birds",
                 ),
                 
                 track_card(
                     title="Boulder Canyon Birds (Binaural)",
                     audio_url="/media/audio/BoulderCanyonBirds_Binaural.mp3",
+                    image_url="/media/images/bird.JPG",
                     subtitle="Pure Boulder Canyon field capture",
                 ),
                 
@@ -345,21 +346,25 @@ def book() -> rx.Component:
                 track_card(
                     title="Rockin Robin",
                     audio_url="/media/audio/RockinRobn.mp3",
+                    image_url="/media/images/birds.jpg",
                     description="Track 1, Rockin' Robbin, is perfect for your daily tasks. It's tuned to 741 hz to promote problem-solving and puts your brain into beta. This track features the sounds of local birds in Boulder, CO.",
                 ),
                 track_card(
                     title="Awakened",
                     audio_url="/media/audio/11_awakened.mp3",
+                    image_url="/media/images/awkaend.jpg",
                     description="Track 2, Awakened, is a special recording of Elk bugling all night in Rocky Mountain National Park. This track is tuned to 852 hz to promote returning to spiritual order.",
                 ),
                 track_card(
                     title="Rainy Daze",
                     audio_url="/media/audio/12_ranydaze.mp3",
+                    image_url="/media/images/rainy.jpg",
                     description="Track 3, Rainy Daze, is a soothing and relaxing track recorded on a rainy evening in the Rocky Mountains. It's tuned to 396 hz to promote the release of fear, guilt, and anxiety.",
                 ),
                 track_card(
                     title="Sleepy Elk",
                     audio_url="/media/audio/13_sleepyElk-1.mp3",
+                    image_url="/media/images/sleepy-elk.jpg",
                     description="Track 4, Sleepy Elk, is the perfect way to end your day. It's tuned to 174 Hz to promote deep relaxation, slowly bringing your brain from Alpha to Delta.",
                 ),
                 spacing="6",
