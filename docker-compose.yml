@@ -1,7 +1,7 @@
-version: "3.8"
+version: '3.8'
 
 services:
-  web:
+  binaturalweb:
     build:
       context: .
       dockerfile: Dockerfile
@@ -16,12 +16,13 @@ services:
       - DATABASE_URL=sqlite:////data/app.db
       - MEDIA_DIR=/media
     restart: unless-stopped
+    
   tunnel:
     image: cloudflare/cloudflared:latest
-    container_name: imagehost-tunnel
+    container_name: binatural-tunnel
     restart: unless-stopped
     command: tunnel --no-autoupdate run --token ${CLOUDFLARE_TUNNEL_TOKEN}
     depends_on:
-      - image-host
+      - binaturalweb
     env_file:
-      - .env
+      - ./data/.env
