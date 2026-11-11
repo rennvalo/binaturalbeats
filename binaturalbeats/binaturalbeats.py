@@ -228,7 +228,7 @@ def footer() -> rx.Component:
         width="100%",
         border_top="1px solid #e2e8f0",
         margin_top="4em",
-        background="rgba(255, 255, 255, 0.88)",
+        background="rgba(255, 255, 255, 0.70)",
         border_radius="16px",
     )
 
@@ -306,21 +306,6 @@ def index() -> rx.Component:
                 height="80vh",
             ),
             
-            # Cover Image
-            rx.box(
-                rx.image(
-                    src=media_url("images/cover-1.jpeg"),
-                    width="100%", 
-                    height="auto", 
-                    border_radius="16px",
-                    alt="Cover Image",
-                    box_shadow="0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)",
-                ),
-                width="100%",
-                max_width="900px",
-                padding_x="1em",
-            ),
-
             # Intro Section
             rx.vstack(
                 rx.heading("Bi Natural Beats", size="6", text_align="center", font_weight="bold"),
@@ -336,7 +321,7 @@ def index() -> rx.Component:
                 align="center",
                 padding_y="3em",
                 padding_x="1em",
-                background="rgba(255, 255, 255, 0.88)",
+                background="rgba(255, 255, 255, 0.70)",
                 border_radius="16px",
                 width="100%",
             ),
@@ -377,7 +362,7 @@ def index() -> rx.Component:
                 align="center",
                 width="100%",
                 padding_y="2em",
-                background="rgba(255, 255, 255, 0.88)",
+                background="rgba(255, 255, 255, 0.70)",
                 border_radius="16px",
             ),
 
@@ -547,7 +532,7 @@ def book_content() -> rx.Component:
             width="100%",
             max_width="900px",
             padding_y="2em",
-            background="rgba(255, 255, 255, 0.88)",
+            background="rgba(255, 255, 255, 0.70)",
             border_radius="16px",
         )
     )
