@@ -31,9 +31,6 @@ COPY rxconfig.py .
 COPY binaturalbeats/ ./binaturalbeats/
 COPY media/ /media/
 
-# Expose mounted media through Reflex's frontend static asset server.
-RUN ln -sfn /media /app/assets/media
-
 # Initialize reflex and build frontend
 RUN reflex init
 RUN reflex export --frontend-only && rm -f frontend.zip backend.zip

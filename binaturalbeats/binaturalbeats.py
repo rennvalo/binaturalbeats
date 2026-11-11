@@ -1,6 +1,113 @@
+import hmac
+import logging
 import os
+from pathlib import Path
+import time
+
 import reflex as rx
-from starlette.staticfiles import StaticFiles
+from fastapi import HTTPException
+from starlette.responses import FileResponse
+
+
+MEDIA_DIR = Path(os.getenv("MEDIA_DIR", "/media"))
+if not MEDIA_DIR.exists():
+    MEDIA_DIR = Path(__file__).resolve().parent.parent / "media"
+
+API_URL = os.getenv("API_URL", "http://localhost:8000").rstrip("/")
+BOOK_ONLY_MEDIA = frozenset(
+    {
+        "audio/11_awakened.mp3",
+        "audio/12_ranydaze.mp3",
+        "audio/13_sleepyElk-1.mp3",
+        "audio/RockinRobn.mp3",
+        "docs/RockyMountainBook.pdf",
+        "images/awkaend.jpg",
+        "images/cover-small.png",
+        "images/rainy.jpg",
+        "images/sleepy-elk.jpg",
+    }
+)
+BOOK_MEDIA_PATHS = BOOK_ONLY_MEDIA | {"images/birds.jpg"}
+BOOK_ACCESS_TOKEN_TTL = 60 * 60
+
+
+def media_url(path: str) -> str:
+    return f"{API_URL}/media/{path}"
+
+
+def book_media_url(path: str) -> str:
+    return f"{API_URL}/book-media/{path}?access_token=" + State.book_access_token
+
+
+def create_book_access_token() -> str:
+    expires_at = int(time.time()) + BOOK_ACCESS_TOKEN_TTL
+    password = os.environ["BOOK_PASSWORD"]
+    signature = hmac.new(
+        password.encode("utf-8"),
+        f"book:{expires_at}".encode("utf-8"),
+        "sha256",
+    ).hexdigest()
+    return f"{expires_at}.{signature}"
+
+
+def require_book_access(access_token: str | None) -> None:
+    configured_password = os.getenv("BOOK_PASSWORD")
+    if not configured_password or not access_token:
+        raise HTTPException(status_code=401, detail="Book password required")
+
+    try:
+        expires_text, signature = access_token.split(".", maxsplit=1)
+        expires_at = int(expires_text)
+    except ValueError:
+        raise HTTPException(status_code=401, detail="Book password required") from None
+
+    if expires_at <= int(time.time()):
+        raise HTTPException(status_code=401, detail="Book access expired")
+
+    expected_signature = hmac.new(
+        configured_password.encode("utf-8"),
+        f"book:{expires_at}".encode("utf-8"),
+        "sha256",
+    ).hexdigest()
+    if not hmac.compare_digest(signature, expected_signature):
+        raise HTTPException(status_code=401, detail="Book password required")
+
+
+def media_file(file_path: str) -> Path:
+    root = MEDIA_DIR.resolve()
+    path = (root / file_path).resolve()
+    try:
+        path.relative_to(root)
+    except ValueError as exc:
+        raise HTTPException(status_code=404, detail="Media not found") from exc
+    if not path.is_file():
+        raise HTTPException(status_code=404, detail="Media not found")
+    return path
+
+
+def canonical_media_path(path: Path) -> str:
+    return path.relative_to(MEDIA_DIR.resolve()).as_posix()
+
+
+async def serve_media(
+    file_path: str,
+    access_token: str | None = None,
+):
+    path = media_file(file_path)
+    if canonical_media_path(path) in BOOK_ONLY_MEDIA:
+        require_book_access(access_token)
+    return FileResponse(path)
+
+
+async def serve_book_media(
+    file_path: str,
+    access_token: str | None = None,
+):
+    require_book_access(access_token)
+    path = media_file(file_path)
+    if canonical_media_path(path) not in BOOK_MEDIA_PATHS:
+        raise HTTPException(status_code=404, detail="Media not found")
+    return FileResponse(path)
 
 
 def parallax_section(content: rx.Component, height: str = "100vh") -> rx.Component:
@@ -31,6 +138,30 @@ def parallax_section(content: rx.Component, height: str = "100vh") -> rx.Compone
 # State management
 class State(rx.State):
     """The app state."""
+    book_authenticated: bool = False
+    book_login_error: str = ""
+    book_access_token: str = ""
+
+    def authenticate_book(self, form_data: dict):
+        password = form_data.get("password", "")
+        if not isinstance(password, str):
+            password = ""
+        configured_password = os.getenv("BOOK_PASSWORD")
+        if not configured_password:
+            logging.error("BOOK_PASSWORD is not configured; book access is disabled")
+            self.book_login_error = "Book access is not configured. Please contact the site owner."
+            return
+        if hmac.compare_digest(
+            password.encode("utf-8"),
+            configured_password.encode("utf-8"),
+        ):
+            self.book_authenticated = True
+            self.book_access_token = create_book_access_token()
+            self.book_login_error = ""
+            return
+        logging.warning("Invalid book password attempt")
+        self.book_login_error = "Incorrect password. Please try again."
+
     # Contact form state
     name: str = ""
     email: str = ""
@@ -110,7 +241,7 @@ def track_card(title: str, audio_url: str, image_url: str = None, subtitle: str 
             rx.cond(
                 image_url is not None,
                 rx.image(
-                    src=image_url if image_url else "",
+                    src=image_url,
                     width="100%",
                     max_width="600px",
                     height="auto",
@@ -178,7 +309,7 @@ def index() -> rx.Component:
             # Cover Image
             rx.box(
                 rx.image(
-                    src="/media/images/cover.png", 
+                    src=media_url("images/cover.jpg"),
                     width="100%", 
                     height="auto", 
                     border_radius="16px",
@@ -217,28 +348,28 @@ def index() -> rx.Component:
                 
                 track_card(
                     title="Industrial Birds 3D",
-                    audio_url="/media/audio/221024_001_Binaural_industrial_birds-2.mp3",
-                    image_url="/media/images/birds.jpg",
+                    audio_url=media_url("audio/221024_001_Binaural_industrial_birds-2.mp3"),
+                    image_url=media_url("images/birds.jpg"),
                 ),
                 
                 track_card(
                     title="Industrial Birds Focused",
-                    audio_url="/media/audio/221024_001_Binaural_industrial_birds-1.mp3",
-                    image_url="/media/images/bird.JPG",
+                    audio_url=media_url("audio/221024_001_Binaural_industrial_birds-1.mp3"),
+                    image_url=media_url("images/bird.JPG"),
                     subtitle="Boulder Canyon birds",
                 ),
                 
                 track_card(
                     title="Boulder Canyon Birds (Binaural)",
-                    audio_url="/media/audio/BoulderCanyonBirds_Binaural.mp3",
-                    image_url="/media/images/bird.JPG",
+                    audio_url=media_url("audio/BoulderCanyonBirds_Binaural.mp3"),
+                    image_url=media_url("images/birds2.jpg"),
                     subtitle="Pure Boulder Canyon field capture",
                 ),
                 
                 track_card(
                     title="Snow Creek near Big Elk Meadows",
-                    audio_url="/media/audio/snow_creek-1.mp3",
-                    image_url="/media/images/snow_creek.jpg",
+                    audio_url=media_url("audio/snow_creek-1.mp3"),
+                    image_url=media_url("images/snow_creek.jpg"),
                     subtitle="Snow Creek near Big Elk Meadows",
                 ),
 
@@ -285,7 +416,7 @@ def index() -> rx.Component:
         width="100%",
         min_height="100vh",
         style={
-            "background_image": "url('/media/images/background.jpg')",
+            "background_image": "url('" + media_url("images/background.jpg") + "')",
             "background_attachment": "fixed",
             "background_position": "center",
             "background_repeat": "no-repeat",
@@ -310,7 +441,7 @@ def page_layout(content: rx.Component) -> rx.Component:
         width="100%",
         min_height="100vh",
         style={
-            "background_image": "url('/media/images/background.jpg')",
+            "background_image": "url('" + media_url("images/background.jpg") + "')",
             "background_attachment": "fixed",
             "background_position": "center",
             "background_repeat": "no-repeat",
@@ -319,13 +450,48 @@ def page_layout(content: rx.Component) -> rx.Component:
     )
 
 
-def book() -> rx.Component:
-    """Dedicated album and companion book page."""
+def book_login() -> rx.Component:
+    return page_layout(
+        rx.vstack(
+            rx.heading("Book Access", size="7", text_align="center", font_weight="bold", color="#1a202c"),
+            rx.text("Enter the password to access the book and its audio tracks.", text_align="center", color="#4a5568"),
+            rx.form(
+                rx.vstack(
+                    rx.input(
+                        name="password",
+                        type="password",
+                        placeholder="Password",
+                        required=True,
+                        width="100%",
+                    ),
+                    rx.text(State.book_login_error, color="#c53030", role="alert"),
+                    rx.button("Continue", type="submit", color_scheme="teal", width="100%"),
+                    spacing="4",
+                    width="100%",
+                ),
+                on_submit=State.authenticate_book,
+                reset_on_submit=True,
+                width="100%",
+                max_width="400px",
+            ),
+            spacing="4",
+            align="center",
+            width="100%",
+            max_width="600px",
+            padding="2em",
+            background="rgba(255, 255, 255, 0.92)",
+            border_radius="16px",
+        )
+    )
+
+
+def book_content() -> rx.Component:
+    """Render the album and companion book after the password check."""
     return page_layout(
         rx.vstack(
             rx.heading("Nature is Binaural", size="7", text_align="center", font_weight="bold", color="#1a202c"),
             rx.image(
-                src="/media/images/cover-small.png",
+                src=book_media_url("images/cover-small.png"),
                 width="100%",
                 max_width="600px",
                 border_radius="15px",
@@ -345,26 +511,26 @@ def book() -> rx.Component:
             rx.vstack(
                 track_card(
                     title="Rockin Robin",
-                    audio_url="/media/audio/RockinRobn.mp3",
-                    image_url="/media/images/birds.jpg",
+                    audio_url=book_media_url("audio/RockinRobn.mp3"),
+                    image_url=book_media_url("images/birds.jpg"),
                     description="Track 1, Rockin' Robbin, is perfect for your daily tasks. It's tuned to 741 hz to promote problem-solving and puts your brain into beta. This track features the sounds of local birds in Boulder, CO.",
                 ),
                 track_card(
                     title="Awakened",
-                    audio_url="/media/audio/11_awakened.mp3",
-                    image_url="/media/images/awkaend.jpg",
+                    audio_url=book_media_url("audio/11_awakened.mp3"),
+                    image_url=book_media_url("images/awkaend.jpg"),
                     description="Track 2, Awakened, is a special recording of Elk bugling all night in Rocky Mountain National Park. This track is tuned to 852 hz to promote returning to spiritual order.",
                 ),
                 track_card(
                     title="Rainy Daze",
-                    audio_url="/media/audio/12_ranydaze.mp3",
-                    image_url="/media/images/rainy.jpg",
+                    audio_url=book_media_url("audio/12_ranydaze.mp3"),
+                    image_url=book_media_url("images/rainy.jpg"),
                     description="Track 3, Rainy Daze, is a soothing and relaxing track recorded on a rainy evening in the Rocky Mountains. It's tuned to 396 hz to promote the release of fear, guilt, and anxiety.",
                 ),
                 track_card(
                     title="Sleepy Elk",
-                    audio_url="/media/audio/13_sleepyElk-1.mp3",
-                    image_url="/media/images/sleepy-elk.jpg",
+                    audio_url=book_media_url("audio/13_sleepyElk-1.mp3"),
+                    image_url=book_media_url("images/sleepy-elk.jpg"),
                     description="Track 4, Sleepy Elk, is the perfect way to end your day. It's tuned to 174 Hz to promote deep relaxation, slowly bringing your brain from Alpha to Delta.",
                 ),
                 spacing="6",
@@ -373,7 +539,7 @@ def book() -> rx.Component:
             ),
             rx.link(
                 rx.button("Download Rocky Mountain Book (PDF)", color_scheme="blue", size="3"),
-                href="/media/docs/RockyMountainBook.pdf",
+                href=book_media_url("docs/RockyMountainBook.pdf"),
                 is_external=True,
             ),
             spacing="6",
@@ -385,6 +551,11 @@ def book() -> rx.Component:
             border_radius="16px",
         )
     )
+
+
+def book() -> rx.Component:
+    """Show the book only after the current user enters the password."""
+    return rx.cond(State.book_authenticated, book_content(), book_login())
 
 
 def legal_section(title: str, body: str) -> rx.Component:
@@ -594,12 +765,8 @@ app = rx.App(
     )
 )
 
-# Static media mount directly into FastAPI backend
-media_dir = os.getenv("MEDIA_DIR", "/media")
-if not os.path.exists(media_dir):
-    media_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "media")
-if os.path.exists(media_dir):
-    app.api.mount("/media", StaticFiles(directory=media_dir), name="media")
+app.api.add_api_route("/media/{file_path:path}", serve_media, methods=["GET", "HEAD"])
+app.api.add_api_route("/book-media/{file_path:path}", serve_book_media, methods=["GET", "HEAD"])
 
 app.add_page(index, route="/", title="Bi Natural Beats Studio")
 app.add_page(book, route="/book", title="Nature is Binaural - Bi Natural Beats")
