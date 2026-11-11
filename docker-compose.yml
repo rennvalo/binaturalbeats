@@ -16,3 +16,12 @@ services:
       - DATABASE_URL=sqlite:////data/app.db
       - MEDIA_DIR=/media
     restart: unless-stopped
+  tunnel:
+    image: cloudflare/cloudflared:latest
+    container_name: imagehost-tunnel
+    restart: unless-stopped
+    command: tunnel --no-autoupdate run --token ${CLOUDFLARE_TUNNEL_TOKEN}
+    depends_on:
+      - image-host
+    env_file:
+      - .env
