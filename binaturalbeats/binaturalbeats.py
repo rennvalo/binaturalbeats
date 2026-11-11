@@ -309,7 +309,7 @@ def index() -> rx.Component:
             # Cover Image
             rx.box(
                 rx.image(
-                    src=media_url("images/cover.jpg"),
+                    src=media_url("images/cover-1.jpeg"),
                     width="100%", 
                     height="auto", 
                     border_radius="16px",
