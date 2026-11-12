@@ -12,6 +12,8 @@ db_url = os.getenv("DATABASE_URL", "sqlite:////data/app.db")
 config = rx.Config(
     app_name="binaturalbeats",
     db_url=db_url,
+    api_url=os.getenv("API_URL", "http://localhost:8000").rstrip("/"),
+    frontend_port=int(os.getenv("FRONTEND_PORT", "3000")),
     env_file=env_file if os.path.exists(env_file) else None,
     telemetry_enabled=False,
 )

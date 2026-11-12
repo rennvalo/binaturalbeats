@@ -7,6 +7,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     git \
     unzip \
     build-essential \
+    nginx \
+    supervisor \
     && curl -fsSL https://deb.nodesource.com/setup_22.x | bash - \
     && apt-get install -y --no-install-recommends nodejs \
     && apt-get clean \
@@ -30,15 +32,18 @@ RUN mkdir -p /data /media /app/assets
 COPY rxconfig.py .
 COPY binaturalbeats/ ./binaturalbeats/
 COPY media/ /media/
+COPY nginx.conf /etc/nginx/nginx.conf
+COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
 # Initialize reflex and build frontend
 RUN reflex init
 RUN reflex export --frontend-only && rm -f frontend.zip backend.zip
 
-EXPOSE 3000 8000
+EXPOSE 3000
 
-ENV PORT=3000
-ENV API_URL=http://localhost:8000
+ENV PORT=3001
+ENV FRONTEND_PORT=3001
+ENV API_URL=https://binatural.resumebasics.com
 ENV DATABASE_URL=sqlite:////data/app.db
 
-CMD ["reflex", "run", "--env", "prod"]
+CMD ["supervisord", "-n", "-c", "/etc/supervisor/supervisord.conf"]

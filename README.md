@@ -35,7 +35,11 @@ BOOK_PASSWORD=replace-with-a-long-unique-password
 
 The Book page form accepts the password above. A successful entry grants a signed access token valid for one hour, which the page uses to request protected audio, artwork, and the PDF without a second browser prompt. Book-only files return an authorization error if no password is configured. Artwork also used on the public homepage remains public at its public media URL.
 
-The Reflex frontend and backend use ports 3000 and 8000 respectively. Use HTTPS when exposing the site outside a trusted local network because HTTP Basic credentials must be protected in transit.
+The container exposes port 3000 through an internal Nginx proxy. The proxy sends the Reflex frontend to port 3001 and routes Reflex websocket events and media requests to the backend on port 8000. Only port 3000 is published to the host; the backend remains internal to the container. This keeps the frontend and backend behind the same Cloudflare Tunnel origin; no separate tunnel ingress rule is needed.
+
+The default public API URL is `https://binatural.resumebasics.com`. If the site uses a different hostname, set `PUBLIC_APP_URL` in the Compose environment to that HTTPS origin. Use HTTPS when exposing the site outside a trusted local network because credentials must be protected in transit.
+
+For local-only Compose testing without sending backend requests through the public tunnel, set `PUBLIC_APP_URL=http://localhost:3000`.
 
 ```bash
 docker compose up --build -d
